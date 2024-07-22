@@ -1,0 +1,25 @@
+import rtconfig
+from building import *
+
+# get current directory
+cwd = GetCurrentDir()
+
+# The set of source files associated with this SConscript file.
+cwd = GetCurrentDir()
+
+src = Split('''
+ae350.c
+cache.c
+initfini.c
+interrupt.c
+loader.c
+reset.c
+trap.c
+start.S
+''')
+
+path = [cwd]
+
+group = DefineGroup('ae350', src, depend = [''], CPPPATH = path)
+
+Return('group')

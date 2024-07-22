@@ -1,0 +1,14 @@
+import rtconfig
+from building import *
+
+# get current directory
+cwd = GetCurrentDir()
+
+src = []
+
+path = [cwd]
+
+group = DefineGroup('sag', src, depend = [''], CPPPATH = path)
+
+Return('group')
+

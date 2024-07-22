@@ -1,0 +1,13 @@
+import rtconfig
+from building import *
+
+cwd = GetCurrentDir()
+
+# add the general drvers.
+src = Glob("*.c")
+
+CPPPATH = [cwd]
+
+group = DefineGroup('lib', src, depend = [''], CPPPATH = CPPPATH)
+
+Return('group')
