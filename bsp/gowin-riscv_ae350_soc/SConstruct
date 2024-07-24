@@ -43,19 +43,19 @@ Export('SDK_LIB')
 objs = PrepareBuilding(env, RTT_ROOT)
 
 # include libraries
-objs.extend(SConscript(os.path.join(libraries_path_prefix, 'ae350', 'SConscript')))
+objs.extend(SConscript(os.path.join(libraries_path_prefix, 'ae350', 'SConscript'), variant_dir='build/libraries/ae350', duplicate=0))
 
 # include configuration
-objs.extend(SConscript(os.path.join(libraries_path_prefix, 'config', 'SConscript')))
+objs.extend(SConscript(os.path.join(libraries_path_prefix, 'config', 'SConscript'), variant_dir='build/libraries/config', duplicate=0))
 
 # include drivers
-objs.extend(SConscript(os.path.join(libraries_path_prefix, 'driver', 'SConscript')))
+objs.extend(SConscript(os.path.join(libraries_path_prefix, 'driver', 'SConscript'), variant_dir='build/libraries/driver', duplicate=0))
 
 # include drivers
-objs.extend(SConscript(os.path.join(libraries_path_prefix, 'lib', 'SConscript')))
+objs.extend(SConscript(os.path.join(libraries_path_prefix, 'lib', 'SConscript'), variant_dir='build/libraries/lib', duplicate=0))
 
 # include drivers
-objs.extend(SConscript(os.path.join(libraries_path_prefix, 'sag', 'SConscript')))
+objs.extend(SConscript(os.path.join(libraries_path_prefix, 'sag', 'SConscript'), variant_dir='build/libraries/sag', duplicate=0))
 
 # make a building
 DoBuilding(TARGET, objs)
