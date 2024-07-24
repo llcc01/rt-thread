@@ -22,4 +22,5 @@ config SOC_AE350
     bool 
     select RT_USING_COMPONENTS_INIT
     select RT_USING_USER_MAIN
+    select RT_USING_CACHE
     default y

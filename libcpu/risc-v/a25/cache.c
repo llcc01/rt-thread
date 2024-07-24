@@ -8,8 +8,9 @@
  */
 
 // Includes ----------------------------------------------------------------------------------
-#include "../../ae350_soc/ae350/cache.h"
-
+#include <rthw.h>
+#include <rtdef.h>
+#include "cache.h"
 
 // Definitions -------------------------------------------------------------------------------
 
@@ -440,4 +441,48 @@ void ae350_dma_invalidate_range2(unsigned long start, unsigned long size)
 	}
 
 	GIE_RESTORE(saved_gie);
+}
+
+rt_inline rt_uint32_t rt_cpu_icache_line_size()
+{
+    return 0;
+}
+
+rt_inline rt_uint32_t rt_cpu_dcache_line_size()
+{
+    return 0;
+}
+
+void rt_hw_cpu_icache_ops(int ops, void *addr, int size)
+{
+	if (ops == RT_HW_CACHE_INVALIDATE)
+    {
+        ae350_icache_invalidate_range((unsigned long)addr, size);
+    }
+}
+
+void rt_hw_cpu_dcache_ops(int ops, void *addr, int size)
+{
+    if (ops == RT_HW_CACHE_FLUSH)
+    {
+        ae350_dcache_flush_range((unsigned long)addr, size);
+    }
+    else
+    {
+        ae350_dcache_invalidate_range((unsigned long)addr, size);
+    }
+}
+
+rt_base_t rt_hw_cpu_icache_status_local()
+{
+    return 0;
+}
+
+rt_base_t rt_hw_cpu_dcache_status()
+{
+    return 0;
+}
+
+void rt_hw_sync_cache_local(void *addr, int size)
+{
 }

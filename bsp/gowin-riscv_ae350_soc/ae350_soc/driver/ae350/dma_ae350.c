@@ -12,7 +12,7 @@
 
 // If enable L1 cache
 #ifdef CFG_CACHE_ENABLE
-#include "../../ae350_soc/ae350/cache.h"
+#include "cache.h"
 #endif
 
 

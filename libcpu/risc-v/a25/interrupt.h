@@ -17,6 +17,9 @@
 extern "C" {
 #endif
 
+#include "cpuport.h"
+#include "ae350_soc/ae350/ae350.h"
+
 
 // Definitions ------------------------------------------------------------------------------
 
@@ -28,7 +31,6 @@ extern "C" {
  */
 #define NDS_PLIC_BASE        PLIC_BASE
 #define NDS_PLIC_SW_BASE     PLIC_SW_BASE
-#include "../../ae350_soc/ae350/plic.h"
 
 /*
  * CPU Machine timer control

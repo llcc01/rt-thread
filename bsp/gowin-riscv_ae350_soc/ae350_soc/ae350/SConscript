@@ -9,13 +9,9 @@ cwd = GetCurrentDir()
 
 src = Split('''
 ae350.c
-cache.c
 initfini.c
-interrupt.c
 loader.c
 reset.c
-trap.c
-start.S
 ''')
 
 path = [cwd]

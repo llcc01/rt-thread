@@ -17,10 +17,11 @@ extern "C" {
 
 
 // Includes ---------------------------------------------------------------------------------
-#include "../../ae350_soc/config/config.h"
-#include "../../ae350_soc/ae350/core_v5.h"
-#include "../../ae350_soc/ae350/ae350.h"
-#include "../../ae350_soc/ae350/interrupt.h"
+#include "ae350_soc/config/config.h"
+#include "cpuport.h"
+#include "ae350_soc/ae350/ae350.h"
+#include "interrupt.h"
+#include "ae350_soc/ae350/plic.h"
 
 
 // Definitions ------------------------------------------------------------------------------

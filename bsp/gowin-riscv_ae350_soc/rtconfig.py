@@ -45,7 +45,7 @@ if PLATFORM == 'gcc':
     DEVICE = ' -march=rv32imafdc -mabi=ilp32d -mcmodel=medany -DUSE_M_TIME -DNO_INIT '
     CFLAGS  = DEVICE + '-D_POSIX_C_SOURCE -ffreestanding -flax-vector-conversions -Wno-cpp -fno-common -ffunction-sections -fdata-sections -fstrict-volatile-bitfields -fdiagnostics-color=always'
     CFLAGS += ' -save-temps=obj'
-    AFLAGS  = ' -c' + DEVICE + ' -x assembler-with-cpp '
+    AFLAGS  = ' -c' + DEVICE + ' -x assembler-with-cpp -D__ASSEMBLY__ '
     AFLAGS += ' -Iplatform -Isrc/ae350'
     LFLAGS = DEVICE
     LFLAGS  = DEVICE + ' -nostartfiles -Wl,--gc-sections,-Map=rtthread.map,-cref,-u,_start -T ' + LINK_FILE + ' -lsupc++ -lgcc -static'
