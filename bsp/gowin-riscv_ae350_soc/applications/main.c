@@ -33,6 +33,8 @@ int main(void)
 	uint8_t num = 0;
 	uint32_t led_pin = 0;	// This led
 
+	rt_kprintf("Hello, RT-Thread!\n");
+
 	//Initializes GPIO
 	GPIO_Dri->Initialize(gpio_callback);
 
@@ -52,6 +54,8 @@ int main(void)
 
 		// This led is on
 		GPIO_Dri->Write(led_pin, 1);	// High level: on
+
+		rt_kprintf("LED %d\n", num);
 
 		rt_thread_mdelay(100);			// Delay
 

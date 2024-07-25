@@ -38,6 +38,11 @@ _start:
 	la t0, _stack
 	mv sp, t0
 
+	/**
+     * mscratch is always zero on kernel mode
+     */
+    csrw mscratch, zero
+
 #ifdef __nds_execit
 	/* Initialize EXEC.IT table */
 	la t0, _ITB_BASE_

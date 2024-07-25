@@ -48,7 +48,7 @@ static UART_DMA uart1_dma_rx = {DRV_UART1_DMA_RX_CH,
                                 uart1_dma_rx_event};
 #endif
 
-static const UART_RESOURCES uart1_resources =
+const UART_RESOURCES uart1_resources =
 {
 	{
 		// Capabilities
@@ -112,7 +112,7 @@ static UART_DMA uart2_dma_rx = {DRV_UART2_DMA_RX_CH,
                                 uart2_dma_rx_event};
 #endif
 
-static const UART_RESOURCES uart2_resources =
+const UART_RESOURCES uart2_resources =
 {
 	{
 		// Capabilities

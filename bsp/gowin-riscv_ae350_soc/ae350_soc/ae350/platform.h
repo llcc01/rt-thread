@@ -21,7 +21,7 @@ extern "C" {
 #include "cpuport.h"
 #include "ae350_soc/ae350/ae350.h"
 #include "interrupt.h"
-#include "ae350_soc/ae350/plic.h"
+#include "plic.h"
 
 
 // Definitions ------------------------------------------------------------------------------

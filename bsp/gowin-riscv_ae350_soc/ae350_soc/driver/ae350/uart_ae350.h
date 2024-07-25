@@ -180,5 +180,12 @@ typedef struct
 	UART_INFO                 *info;         // Run-Time information
 } const UART_RESOURCES;
 
+extern const UART_RESOURCES uart1_resources;
+extern const UART_RESOURCES uart2_resources;
+
+static int32_t uart_initialize (AE350_UART_SignalEvent_t cb_event, UART_RESOURCES *uartx);
+static int32_t uart_send (const void *data, uint32_t num, UART_RESOURCES *uartx);
+static int32_t uart_receive (void *data, uint32_t num, UART_RESOURCES *uartx);
+static int32_t uart_set_baudrate (uint32_t baudrate, UART_RESOURCES *uartx);
 
 #endif /* __UART_AE350_H__ */

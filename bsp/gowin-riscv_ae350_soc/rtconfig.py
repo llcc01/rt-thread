@@ -20,8 +20,8 @@ else:
     print('Please make sure your toolchains is GNU GCC!')
     exit(0)
 
-BUILD = 'debug'
-#BUILD = 'release'
+# BUILD = 'debug'
+BUILD = 'release'
 
 CORE = 'risc-v'
 LINK_FILE = './ae350_soc/sag/ae350-ddr.ld'                                                              ## users
@@ -42,8 +42,8 @@ if PLATFORM == 'gcc':
     OBJDUMP = PREFIX + 'objdump'
     OBJCPY = PREFIX + 'objcopy'
 
-    DEVICE = ' -march=rv32imafdc -mabi=ilp32d -mcmodel=medany -DUSE_M_TIME -DNO_INIT '
-    CFLAGS  = DEVICE + '-D_POSIX_C_SOURCE -ffreestanding -flax-vector-conversions -Wno-cpp -fno-common -ffunction-sections -fdata-sections -fstrict-volatile-bitfields -fdiagnostics-color=always'
+    DEVICE = ' -march=rv32imafdc -mabi=ilp32d -mcmodel=medany -msmall-data-limit=8 -DUSE_M_TIME -DNO_INIT '
+    CFLAGS  = DEVICE + '-nostartfiles -D_POSIX_C_SOURCE -ffreestanding -flax-vector-conversions -Wno-cpp -fno-common -ffunction-sections -fdata-sections -fstrict-volatile-bitfields -fdiagnostics-color=always'
     CFLAGS += ' -save-temps=obj'
     AFLAGS  = ' -c' + DEVICE + ' -x assembler-with-cpp -D__ASSEMBLY__ '
     AFLAGS += ' -Iplatform -Isrc/ae350'
@@ -59,5 +59,7 @@ if PLATFORM == 'gcc':
     else:
         CFLAGS += ' -O2'
 
+    DUMP_ACTION = OBJDUMP + ' -D -S $TARGET > rtt.asm\n'
     POST_ACTION = OBJCPY + ' -O binary $TARGET ' + TARGET_NAME + '\n'
     POST_ACTION += SIZE + ' $TARGET\n'
+    POST_ACTION += DUMP_ACTION

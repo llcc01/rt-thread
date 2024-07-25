@@ -24,3 +24,25 @@ config SOC_AE350
     select RT_USING_USER_MAIN
     select RT_USING_CACHE
     default y
+
+menu "AE350 On-chip Peripheral Drivers"
+    config BSP_USING_GPIO
+        bool "Enable GPIO"
+        select RT_USING_PIN
+        default y
+
+    menuconfig BSP_USING_UART
+        bool "Enable UART"
+        default y
+        select RT_USING_SERIAL
+        if BSP_USING_UART
+            menuconfig BSP_USING_UART1
+                bool "Enable UART1"
+                default y
+
+            menuconfig BSP_USING_UART2
+                bool "Enable UART2"
+                default n
+
+        endif
+endmenu

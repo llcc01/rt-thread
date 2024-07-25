@@ -74,6 +74,11 @@ extern "C" {
  */
 extern void mext_interrupt(unsigned int irq_source);
 
+#define IRQ_OFFSET          16
+#ifndef IRQ_MAX_NR
+#define IRQ_MAX_NR          207
+#endif
+#define INTERRUPTS_MAX      (IRQ_OFFSET + IRQ_MAX_NR)
 
 #ifdef __cplusplus
 }

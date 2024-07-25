@@ -1,25 +1,28 @@
 /*
- * ******************************************************************************************
- * File		: trap.c
- * Author	: GowinSemicoductor
- * Chip		: AE350_SOC
- * Function	: Trap handler
- * ******************************************************************************************
+ * Copyright (c) 2006-2021, RT-Thread Development Team
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Change Logs:
+ * Date           Author       Notes
+ * 2021/1/30      lizirui      first version
+ * 2021/10/20     JasonHu      move to trap.c
  */
 
-// No Vectored PLIC
+#include <rthw.h>
+#include <rtthread.h>
+#include <stdint.h>
 
-// Includes ---------------------------------------------------------------------------------
-#include <stdio.h>
-#include "cpuport.h"
-#include "interrupt.h"
-#include "riscv.h"
+
+#include "tick.h"
 #include "stack.h"
-#include "regtypes.h"
-#include "ae350_soc/ae350/plic.h"
+#include "riscv.h"
+#include "interrupt.h"
+#include "plic.h"
 
 #ifdef RT_USING_SMART
 #include <lwp_arch.h>
+void rt_hw_backtrace(rt_uint32_t *ffp, rt_ubase_t sepc);
 #else
 #define rt_hw_backtrace(...) (0)
 #endif
@@ -27,117 +30,6 @@
 #define DBG_TAG "libcpu.trap"
 #define DBG_LVL DBG_INFO
 #include <rtdbg.h>
-
-
-// Definitions ------------------------------------------------------------------------------
-
-// Machine timer interrupt handler
-__attribute__((weak)) void mtime_handler(void)
-{
-	clear_csr(NDS_MIE, MIP_MTIP);
-}
-
-// Machine software interrupt handler
-__attribute__((weak)) void mswi_handler(void)
-{
-	clear_csr(NDS_MIE, MIP_MSIP);
-}
-
-// System call interrupt handler
-__attribute__((weak)) void syscall_handler(long n, long a0, long a1, long a2, long a3)
-{
-	printf("syscall #%ld (a0:0x%lx,a1:0x%lx, a2:0x%lx, a3:0x%lx)\n", n, a0, a1, a2, a3);
-}
-
-// Exception interrupt handler
-__attribute__((weak)) long except_handler(long cause, long epc)
-{
-	/* Unhandled Trap */
-	printf("Unhandled Trap : mcause = 0x%x, mepc = 0x%x\n", (unsigned int)cause, (unsigned int)epc);
-
-	return epc;
-}
-
-// Trap entry
-void trap_entry(void) __attribute__ ((interrupt ("machine") , aligned(4)));
-void trap_entry(void)
-{
-	long mcause = read_csr(NDS_MCAUSE);
-	long mepc = read_csr(NDS_MEPC);
-	long mstatus = read_csr(NDS_MSTATUS);
-#if SUPPORT_PFT_ARCH
-	long mxstatus = read_csr(NDS_MXSTATUS);
-#endif
-#ifdef __riscv_dsp
-	int ucode = read_csr(NDS_UCODE);
-#endif
-#ifdef __riscv_flen
-	int fcsr = read_fcsr();
-#endif
-
-	/* clobbers list for ecall */
-#ifdef __riscv_32e
-	__asm volatile("" : : :"t0", "a0", "a1", "a2", "a3");
-#else
-	__asm volatile("" : : :"a7", "a0", "a1", "a2", "a3");
-#endif
-
-	/* Do your trap handling */
-	if ((mcause & MCAUSE_INT) && ((mcause & MCAUSE_CAUSE) == IRQ_M_EXT))
-	{
-		/* Machine-level interrupt from PLIC */
-		mext_interrupt(__nds__plic_claim_interrupt());
-	}
-	else if ((mcause & MCAUSE_INT) && ((mcause & MCAUSE_CAUSE) == IRQ_M_TIMER))
-	{
-		/* Machine timer interrupt */
-		mtime_handler();
-	}
-	else if ((mcause & MCAUSE_INT) && ((mcause & MCAUSE_CAUSE) == IRQ_M_SOFT))
-	{
-		/* Machine SWI interrupt */
-		mswi_handler();
-
-		/* Machine SWI is connected to PLIC_SW source 1 */
-		__nds__plic_sw_complete_interrupt((read_csr(NDS_MHARTID) + 1));
-	}
-	else if (!(mcause & MCAUSE_INT) && ((mcause & MCAUSE_CAUSE) == TRAP_M_ECALL))
-	{
-		/* Machine Syscal call */
-		__asm volatile(
-				"mv a4, a3\n"
-				"mv a3, a2\n"
-				"mv a2, a1\n"
-				"mv a1, a0\n"
-#ifdef __riscv_32e
-				"mv a0, t0\n"
-#else
-				"mv a0, a7\n"
-#endif
-				"call syscall_handler\n"
-				: : : "a4"
-		);
-		mepc += 4;
-	}
-	else
-	{
-		/* Unhandled Trap */
-		mepc = except_handler(mcause, mepc);
-	}
-
-	/* Restore CSR */
-	write_csr(NDS_MSTATUS, mstatus);
-	write_csr(NDS_MEPC, mepc);
-#if SUPPORT_PFT_ARCH
-	write_csr(NDS_MXSTATUS, mxstatus);
-#endif
-#ifdef __riscv_dsp
-	write_csr(NDS_UCODE, ucode);
-#endif
-#ifdef __riscv_flen
-	write_fcsr(fcsr);
-#endif
-}
 
 void dump_regs(struct rt_hw_stack_frame *regs)
 {
@@ -164,33 +56,161 @@ void dump_regs(struct rt_hw_stack_frame *regs)
     rt_kprintf("\ta4(x14) = 0x%p\ta5(x15) = 0x%p\n", regs->a4, regs->a5);
     rt_kprintf("\ta6(x16) = 0x%p\ta7(x17) = 0x%p\n", regs->a6, regs->a7);
     rt_kprintf("mstatus = 0x%p\n", regs->mstatus);
-    rt_kprintf("\t%s\n", (regs->mstatus & MSTATUS_SIE) ? "Supervisor Interrupt Enabled" : "Supervisor Interrupt Disabled");
-    rt_kprintf("\t%s\n", (regs->mstatus & MSTATUS_SPIE) ? "Last Time Supervisor Interrupt Enabled" : "Last Time Supervisor Interrupt Disabled");
-    rt_kprintf("\t%s\n", (regs->mstatus & MSTATUS_SPP) ? "Last Privilege is Supervisor Mode" : "Last Privilege is User Mode");
-    rt_kprintf("\t%s\n", (regs->mstatus & MSTATUS_PUM) ? "Permit to Access User Page" : "Not Permit to Access User Page");
-    rt_kprintf("\t%s\n", (regs->mstatus & (1 << 19)) ? "Permit to Read Executable-only Page" : "Not Permit to Read Executable-only Page");
-    rt_uintreg_t satp_v = read_csr(satp);
-    rt_kprintf("satp = 0x%p\n", satp_v);
-    rt_kprintf("\tCurrent Page Table(Physical) = 0x%p\n", __MASKVALUE(satp_v, __MASK(44)) << PAGE_OFFSET_BIT);
-    rt_kprintf("\tCurrent ASID = 0x%p\n", __MASKVALUE(satp_v >> 44, __MASK(16)) << PAGE_OFFSET_BIT);
-    const char *mode_str = "Unknown Address Translation/Protection Mode";
+    rt_kprintf("\t%s\n", (regs->mstatus & MSTATUS_MIE) ? "Machine Interrupt Enabled" : "Machine Interrupt Disabled");
+    rt_kprintf("\t%s\n", (regs->mstatus & MSTATUS_MPIE) ? "Last Time Machine Interrupt Enabled" : "Last Time Machine Interrupt Disabled");
+    rt_kprintf("\tLast Privilege Mode:%d\n", (regs->mstatus & MSTATUS_MPP)>>11);
+    // rt_kprintf("\t%s\n", (regs->mstatus & MSTATUS_PUM) ? "Permit to Access User Page" : "Not Permit to Access User Page");
+    // rt_kprintf("\t%s\n", (regs->mstatus & (1 << 19)) ? "Permit to Read Executable-only Page" : "Not Permit to Read Executable-only Page");
+    // rt_uintreg_t satp_v = read_csr(satp);
+    // rt_kprintf("satp = 0x%p\n", satp_v);
+    // rt_kprintf("\tCurrent Page Table(Physical) = 0x%p\n", __MASKVALUE(satp_v, __MASK(44)) << PAGE_OFFSET_BIT);
+    // rt_kprintf("\tCurrent ASID = 0x%p\n", __MASKVALUE(satp_v >> 44, __MASK(16)) << PAGE_OFFSET_BIT);
+    // const char *mode_str = "Unknown Address Translation/Protection Mode";
 
-    switch (__MASKVALUE(satp_v >> 60, __MASK(4)))
-    {
-        case 0:
-            mode_str = "No Address Translation/Protection Mode";
-            break;
+    // switch (__MASKVALUE(satp_v >> 60, __MASK(4)))
+    // {
+    //     case 0:
+    //         mode_str = "No Address Translation/Protection Mode";
+    //         break;
 
-        case 8:
-            mode_str = "Page-based 39-bit Virtual Addressing Mode";
-            break;
+    //     case 8:
+    //         mode_str = "Page-based 39-bit Virtual Addressing Mode";
+    //         break;
 
-        case 9:
-            mode_str = "Page-based 48-bit Virtual Addressing Mode";
-            break;
-    }
+    //     case 9:
+    //         mode_str = "Page-based 48-bit Virtual Addressing Mode";
+    //         break;
+    // }
 
-    rt_kprintf("\tMode = %s\n", mode_str);
+    // rt_kprintf("\tMode = %s\n", mode_str);
     rt_kprintf("-----------------Dump OK---------------------\n");
 }
 
+static const char *Exception_Name[] =
+    {
+        "Instruction Address Misaligned",
+        "Instruction Access Fault",
+        "Illegal Instruction",
+        "Breakpoint",
+        "Load Address Misaligned",
+        "Load Access Fault",
+        "Store/AMO Address Misaligned",
+        "Store/AMO Access Fault",
+        "Environment call from U-mode",
+        "Environment call from S-mode",
+        "Reserved-10",
+        "Reserved-11",
+        "Instruction Page Fault",
+        "Load Page Fault",
+        "Reserved-14",
+        "Store/AMO Page Fault"};
+
+static const char *Interrupt_Name[] =
+    {
+        "User Software Interrupt",
+        "Machine Software Interrupt",
+        "Reversed-2",
+        "Reversed-3",
+        "User Timer Interrupt",
+        "Machine Timer Interrupt",
+        "Reversed-6",
+        "Reversed-7",
+        "User External Interrupt",
+        "Machine External Interrupt",
+        "Reserved-10",
+        "Reserved-11",
+};
+
+#ifndef RT_USING_SMP
+static volatile int nested = 0;
+#define ENTER_TRAP \
+    nested += 1
+#define EXIT_TRAP \
+    nested -= 1
+#define CHECK_NESTED_PANIC(cause, tval, epc, eframe) \
+    if (nested != 1)                                 \
+    handle_nested_trap_panic(cause, tval, epc, eframe)
+#endif /* RT_USING_SMP */
+
+static const char *get_exception_msg(int id)
+{
+    const char *msg;
+    if (id < sizeof(Exception_Name) / sizeof(const char *))
+    {
+        msg = Exception_Name[id];
+    }
+    else
+    {
+        msg = "Unknown Exception";
+    }
+    return msg;
+}
+
+static void handle_nested_trap_panic(
+    rt_size_t cause,
+    rt_size_t tval,
+    rt_size_t epc,
+    struct rt_hw_stack_frame *eframe)
+{
+    LOG_E("\n-------- [SEVER ERROR] --------");
+    LOG_E("Nested trap detected");
+    LOG_E("mcause:0x%p,mtval:0x%p,mepc:0x%p\n", cause, tval, epc);
+    dump_regs(eframe);
+    rt_hw_cpu_shutdown();
+}
+
+#define IN_USER_SPACE (stval >= USER_VADDR_START && stval < USER_VADDR_TOP)
+#define PAGE_FAULT (id == EP_LOAD_PAGE_FAULT || id == EP_STORE_PAGE_FAULT)
+
+/* Trap entry */
+void handle_trap(rt_size_t mcause, rt_size_t mtval, rt_size_t mepc, struct rt_hw_stack_frame *sp)
+{
+    rt_size_t id = mcause & MCAUSE_CAUSE;
+    const char *msg;
+
+    /* supervisor external interrupt */
+    if ((mcause & MCAUSE_INT) && ((mcause & MCAUSE_CAUSE) == IRQ_M_EXT))
+    {
+        rt_interrupt_enter();
+        plic_handle_irq();
+        rt_interrupt_leave();
+        return;
+    }
+    else if ((mcause & MCAUSE_INT) && ((mcause & MCAUSE_CAUSE) == IRQ_M_TIMER))
+    {
+        /* supervisor timer */
+        rt_interrupt_enter();
+        tick_isr();
+        rt_interrupt_leave();
+        return;
+    }
+    else if (MCAUSE_INT & mcause)
+    {
+        if(id < sizeof(Interrupt_Name) / sizeof(const char *))
+        {
+            msg = Interrupt_Name[id];
+        }
+        else
+        {
+            msg = "Unknown Interrupt";
+        }
+        LOG_E("Unhandled Interrupt %ld:%s\n",id,msg);
+    }
+    else
+    {
+        // handle kernel exception:
+        rt_kprintf("Unhandled Exception %ld:%s\n", id, get_exception_msg(id));
+    }
+
+    rt_kprintf("mcause:0x%p,mtval:0x%p,mepc:0x%p\n", mcause, mtval, mepc);
+    dump_regs(sp);
+    rt_kprintf("--------------Thread list--------------\n");
+    rt_kprintf("current thread: %s\n", rt_thread_self()->parent.name);
+
+    extern struct rt_thread *rt_current_thread;
+    rt_kprintf("--------------Backtrace--------------\n");
+    rt_hw_backtrace((uint32_t *)sp->s0_fp, sepc);
+
+    while (1)
+        ;
+}

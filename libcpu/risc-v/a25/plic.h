@@ -205,6 +205,8 @@ __attribute__((always_inline)) static inline void __nds__plic_sw_complete_interr
 
 #endif	// NDS_PLIC_SW_BASE
 
+void plic_handle_irq(void);
+
 
 #ifdef __cplusplus
 }

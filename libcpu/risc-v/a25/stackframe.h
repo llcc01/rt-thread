@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2024, RT-Thread Development Team
+ * Copyright (c) 2006-2021, RT-Thread Development Team
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -8,42 +8,31 @@
  * 2021-02-02     lizhirui     first version
  * 2021-02-11     lizhirui     fixed gp save/store bug
  * 2021-11-18     JasonHu      add fpu registers save/restore
- * 2022/10/22     WangXiaoyao  Support kernel mode RVV;
  */
 
 #ifndef __STACKFRAME_H__
 #define __STACKFRAME_H__
 
-#include "cpuport.h"
-#include "ext_context.h"
-
 #define BYTES(idx)          ((idx) * REGBYTES)
-#define FRAME_OFF_SSTATUS   BYTES(2)
+#define FRAME_OFF_MSTATUS   BYTES(2)
 #define FRAME_OFF_SP        BYTES(32)
 #define FRAME_OFF_GP        BYTES(3)
 
-#ifdef __ASSEMBLY__
+#include "cpuport.h"
+// #include "encoding.h"
+
 
 .macro SAVE_ALL
-
-#ifdef ENABLE_FPU
-    /* reserve float registers */
-    addi sp, sp, -CTX_FPU_REG_NR * REGBYTES
-#endif /* ENABLE_FPU */
-#ifdef ENABLE_VECTOR
-    /* reserve float registers */
-    addi sp, sp, -CTX_VECTOR_REG_NR * REGBYTES
-#endif /* ENABLE_VECTOR */
 
     /* save general registers */
     addi sp, sp, -CTX_GENERAL_REG_NR * REGBYTES
     STORE x1,   1 * REGBYTES(sp)
 
-    csrr  x1, sstatus
-    STORE x1, FRAME_OFF_SSTATUS(sp)
+    csrr  x1, mstatus
+    STORE x1,   2 * REGBYTES(sp)
 
-    csrr  x1, sepc
-    STORE x1,   0 * REGBYTES(sp)
+    csrr  x1, mepc
+    STORE x1, 0 * REGBYTES(sp)
 
     STORE x3,   3 * REGBYTES(sp)
     STORE x4,   4 * REGBYTES(sp) /* save tp */
@@ -74,149 +63,30 @@
     STORE x29, 29 * REGBYTES(sp)
     STORE x30, 30 * REGBYTES(sp)
     STORE x31, 31 * REGBYTES(sp)
-    csrr t0, sscratch
+    csrr t0, mscratch
     STORE t0, 32 * REGBYTES(sp)
 
-#ifdef ENABLE_FPU
-    /* backup sp and adjust sp to save float registers */
-    mv t1, sp
-    addi t1, t1, CTX_GENERAL_REG_NR * REGBYTES
-
-    li  t0, SSTATUS_FS
-    csrs sstatus, t0
-    FSTORE f0,  FPU_CTX_F0_OFF(t1)
-    FSTORE f1,  FPU_CTX_F1_OFF(t1)
-    FSTORE f2,  FPU_CTX_F2_OFF(t1)
-    FSTORE f3,  FPU_CTX_F3_OFF(t1)
-    FSTORE f4,  FPU_CTX_F4_OFF(t1)
-    FSTORE f5,  FPU_CTX_F5_OFF(t1)
-    FSTORE f6,  FPU_CTX_F6_OFF(t1)
-    FSTORE f7,  FPU_CTX_F7_OFF(t1)
-    FSTORE f8,  FPU_CTX_F8_OFF(t1)
-    FSTORE f9,  FPU_CTX_F9_OFF(t1)
-    FSTORE f10, FPU_CTX_F10_OFF(t1)
-    FSTORE f11, FPU_CTX_F11_OFF(t1)
-    FSTORE f12, FPU_CTX_F12_OFF(t1)
-    FSTORE f13, FPU_CTX_F13_OFF(t1)
-    FSTORE f14, FPU_CTX_F14_OFF(t1)
-    FSTORE f15, FPU_CTX_F15_OFF(t1)
-    FSTORE f16, FPU_CTX_F16_OFF(t1)
-    FSTORE f17, FPU_CTX_F17_OFF(t1)
-    FSTORE f18, FPU_CTX_F18_OFF(t1)
-    FSTORE f19, FPU_CTX_F19_OFF(t1)
-    FSTORE f20, FPU_CTX_F20_OFF(t1)
-    FSTORE f21, FPU_CTX_F21_OFF(t1)
-    FSTORE f22, FPU_CTX_F22_OFF(t1)
-    FSTORE f23, FPU_CTX_F23_OFF(t1)
-    FSTORE f24, FPU_CTX_F24_OFF(t1)
-    FSTORE f25, FPU_CTX_F25_OFF(t1)
-    FSTORE f26, FPU_CTX_F26_OFF(t1)
-    FSTORE f27, FPU_CTX_F27_OFF(t1)
-    FSTORE f28, FPU_CTX_F28_OFF(t1)
-    FSTORE f29, FPU_CTX_F29_OFF(t1)
-    FSTORE f30, FPU_CTX_F30_OFF(t1)
-    FSTORE f31, FPU_CTX_F31_OFF(t1)
-
-    /* clr FS domain */
-    csrc sstatus, t0
-
-    /* clean status would clr sr_sd; */
-    li t0, SSTATUS_FS_CLEAN
-    csrs sstatus, t0
-
-#endif /* ENABLE_FPU */
-
-#ifdef ENABLE_VECTOR
-    csrr    t0, sstatus
-    andi    t0, t0, SSTATUS_VS
-    beqz    t0, 0f
-
-    /* push vector frame */
-    addi t1, sp, (CTX_GENERAL_REG_NR + CTX_FPU_REG_NR) * REGBYTES
-
-    SAVE_VECTOR t1
-0:
-#endif /* ENABLE_VECTOR */
 .endm
 
 /**
  * @brief Restore All General Registers, for interrupt handling
  *
  */
-.macro RESTORE_ALL
-
-#ifdef ENABLE_VECTOR
-    // skip on close
-    ld      t0, 2 * REGBYTES(sp)
-    // cannot use vector on initial
-    andi    t0, t0, SSTATUS_VS_CLEAN
-    beqz    t0, 0f
-
-    /* push vector frame */
-    addi t1, sp, (CTX_GENERAL_REG_NR + CTX_FPU_REG_NR) * REGBYTES
-
-    RESTORE_VECTOR t1
-0:
-#endif /* ENABLE_VECTOR */
-
-#ifdef ENABLE_FPU
-    /* restore float register  */
-    addi t2, sp, CTX_GENERAL_REG_NR * REGBYTES
-
-    li  t0, SSTATUS_FS
-    csrs sstatus, t0
-    FLOAD f0,  FPU_CTX_F0_OFF(t2)
-    FLOAD f1,  FPU_CTX_F1_OFF(t2)
-    FLOAD f2,  FPU_CTX_F2_OFF(t2)
-    FLOAD f3,  FPU_CTX_F3_OFF(t2)
-    FLOAD f4,  FPU_CTX_F4_OFF(t2)
-    FLOAD f5,  FPU_CTX_F5_OFF(t2)
-    FLOAD f6,  FPU_CTX_F6_OFF(t2)
-    FLOAD f7,  FPU_CTX_F7_OFF(t2)
-    FLOAD f8,  FPU_CTX_F8_OFF(t2)
-    FLOAD f9,  FPU_CTX_F9_OFF(t2)
-    FLOAD f10, FPU_CTX_F10_OFF(t2)
-    FLOAD f11, FPU_CTX_F11_OFF(t2)
-    FLOAD f12, FPU_CTX_F12_OFF(t2)
-    FLOAD f13, FPU_CTX_F13_OFF(t2)
-    FLOAD f14, FPU_CTX_F14_OFF(t2)
-    FLOAD f15, FPU_CTX_F15_OFF(t2)
-    FLOAD f16, FPU_CTX_F16_OFF(t2)
-    FLOAD f17, FPU_CTX_F17_OFF(t2)
-    FLOAD f18, FPU_CTX_F18_OFF(t2)
-    FLOAD f19, FPU_CTX_F19_OFF(t2)
-    FLOAD f20, FPU_CTX_F20_OFF(t2)
-    FLOAD f21, FPU_CTX_F21_OFF(t2)
-    FLOAD f22, FPU_CTX_F22_OFF(t2)
-    FLOAD f23, FPU_CTX_F23_OFF(t2)
-    FLOAD f24, FPU_CTX_F24_OFF(t2)
-    FLOAD f25, FPU_CTX_F25_OFF(t2)
-    FLOAD f26, FPU_CTX_F26_OFF(t2)
-    FLOAD f27, FPU_CTX_F27_OFF(t2)
-    FLOAD f28, FPU_CTX_F28_OFF(t2)
-    FLOAD f29, FPU_CTX_F29_OFF(t2)
-    FLOAD f30, FPU_CTX_F30_OFF(t2)
-    FLOAD f31, FPU_CTX_F31_OFF(t2)
-
-    /* clr FS domain */
-    csrc sstatus, t0
-
-    /* clean status would clr sr_sd; */
-    li t0, SSTATUS_FS_CLEAN
-    csrs sstatus, t0
-
-#endif /* ENABLE_FPU */
-
+.macro RESTORE_ALL ksp=0
     /* restore general register */
+    .if \ksp
     addi t0, sp, CTX_REG_NR * REGBYTES
-    csrw sscratch, t0
+    csrw mscratch, t0
+    .endif
 
     /* resw ra to sepc */
-    LOAD x1, 0 * REGBYTES(sp)
-    csrw sepc, x1
+    LOAD x1,   0 * REGBYTES(sp)
+    csrw mepc, x1
 
     LOAD x1,   2 * REGBYTES(sp)
-    csrw sstatus, x1
+    csrw mstatus, x1
+    # li    x1, 0x00001800
+    # csrs  mstatus, x1
 
     LOAD x1,   1 * REGBYTES(sp)
 
@@ -261,14 +131,4 @@
     .option pop
 .endm
 
-.macro OPEN_INTERRUPT
-    csrsi sstatus, 2
-.endm
-
-.macro CLOSE_INTERRUPT
-    csrci sstatus, 2
-.endm
-
-#endif /* __ASSEMBLY__ */
-
-#endif /* __STACKFRAME_H__ */
+#endif

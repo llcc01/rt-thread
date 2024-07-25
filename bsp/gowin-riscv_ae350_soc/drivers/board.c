@@ -7,6 +7,8 @@
 
 #include "../ae350_soc/ae350/platform.h"
 #include "../ae350_soc/lib/uart.h"
+#include "drv_uart.h"
+#include "tick.h"
 
 
 // Definitions ------------------------------------------------------------------------------
@@ -34,64 +36,47 @@ rt_weak void *rt_heap_end_get(void)
 }
 #endif
 
-void rt_os_tick_callback(void)
-{
-	rt_interrupt_enter();
+// void rt_os_tick_callback(void)
+// {
+// 	rt_interrupt_enter();
 
-    rt_tick_increase();
+//     rt_tick_increase();
 
-    rt_interrupt_leave();
-}
-
-#ifdef RT_USING_CONSOLE
-// Initializes RT UART console
-static int rt_hw_uart_init(void)
-{
-	// Initializes UART
-	uart_init(38400);	// Baud rate is 38400
-
-    return 0;
-}
-INIT_BOARD_EXPORT(rt_hw_uart_init);
-
-// RT console output
-void rt_hw_console_output(const char *str)
-{
-	uart_puts(str);
-}
-
-#endif	/* RT_USING_CONSOLE */
+//     rt_interrupt_leave();
+// }
 
 // Machine timer interrupt handler
-void mtime_handler(void)
-{
-	/* Disable the timer interrupt to prevent re-entry */
-	HAL_MTIME_DISABLE();
+// void mtime_handler(void)
+// {
+// 	rt_interrupt_enter();
+// 	/* Disable the timer interrupt to prevent re-entry */
+// 	// HAL_MTIME_DISABLE();
 
-	/* Reset the timer to specified period */
-	// [63:0]: [63:32]=[1], [31:0]=[0]
-	unsigned long long mtime = (((unsigned long long)(DEV_PLMT->MTIME[1])) << 32) | (DEV_PLMT->MTIME[0]);	// [63:0]
-	mtime += MACHINE_TIMER_PERIOD;
-	DEV_PLMT->MTIMECMP0[0] = (unsigned int)(mtime);			// [31:0]
-	DEV_PLMT->MTIMECMP0[1] = (unsigned int)(mtime >> 32);	// [63:32]
+// 	/* Reset the timer to specified period */
+// 	// [63:0]: [63:32]=[1], [31:0]=[0]
+// 	unsigned long long mtime = (((unsigned long long)(DEV_PLMT->MTIME[1])) << 32) | (DEV_PLMT->MTIME[0]);	// [63:0]
+// 	mtime += MACHINE_TIMER_PERIOD;
+// 	DEV_PLMT->MTIMECMP0[0] = (unsigned int)(mtime);			// [31:0]
+// 	DEV_PLMT->MTIMECMP0[1] = (unsigned int)(mtime >> 32);	// [63:32]
 
-	// OS tick timer
-	rt_tick_increase();
+// 	// OS tick timer
+// 	rt_tick_increase();
 
-	/* Re-enable the timer interrupt. */
-	HAL_MTIME_ENABLE();
-}
+// 	/* Re-enable the timer interrupt. */
+// 	// HAL_MTIME_ENABLE();
+// 	rt_interrupt_leave();
+// }
 
 // Setup machine timer
-void setup_mtimer(void)
-{
-	HAL_MTIMER_INITIAL();
+// void setup_mtimer(void)
+// {
+// 	HAL_MTIMER_INITIAL();
 
-	unsigned long long mtime = (((unsigned long long)(DEV_PLMT->MTIME[1])) << 32) | (DEV_PLMT->MTIME[0]);	// [63:0]
-	mtime += MACHINE_TIMER_PERIOD;
-	DEV_PLMT->MTIMECMP0[0] = (unsigned int)(mtime);			// [31:0]
-	DEV_PLMT->MTIMECMP0[1] = (unsigned int)(mtime >> 32);	// [63:32]
-}
+// 	unsigned long long mtime = (((unsigned long long)(DEV_PLMT->MTIME[1])) << 32) | (DEV_PLMT->MTIME[0]);	// [63:0]
+// 	mtime += MACHINE_TIMER_PERIOD;
+// 	DEV_PLMT->MTIMECMP0[0] = (unsigned int)(mtime);			// [31:0]
+// 	DEV_PLMT->MTIMECMP0[1] = (unsigned int)(mtime >> 32);	// [63:32]
+// }
 
 /* fixed misaligned bug for qemu */
 void *__wrap_memset(void *s, int c, size_t n)
@@ -104,11 +89,13 @@ void *__wrap_memset(void *s, int c, size_t n)
  */
 void rt_hw_board_init(void)
 {
-	// Initializes UART
-	rt_hw_uart_init();
+    /* initalize interrupt */
+    rt_hw_interrupt_init();
 
-	rt_hw_console_output("\r\nIt's a RT-Thread Standard version demo.\r\n");
-	rt_hw_console_output("\r\nInitializes RT hw board...\r\n");
+	rt_hw_uart_init();
+#ifdef RT_USING_CONSOLE
+    rt_console_set_device(RT_CONSOLE_DEVICE_NAME);
+#endif
 
     /*
      * TODO 1: OS Tick Configuration
@@ -119,7 +106,8 @@ void rt_hw_board_init(void)
 	HAL_MTIME_DISABLE();
 
 	/* Setup machine timer */
-	setup_mtimer();
+	// setup_mtimer();
+	rt_hw_tick_init();
 
 	/* Re-enable the machine timer interrupt. */
 	HAL_MTIME_ENABLE();
@@ -136,7 +124,4 @@ void rt_hw_board_init(void)
     rt_system_heap_init(rt_heap_begin_get(), rt_heap_end_get());
 #endif
 
-#ifdef RT_USING_CONSOLE
-    rt_console_set_device(RT_CONSOLE_DEVICE_NAME);
-#endif
 }
