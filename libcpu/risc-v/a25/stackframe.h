@@ -63,30 +63,25 @@
     STORE x29, 29 * REGBYTES(sp)
     STORE x30, 30 * REGBYTES(sp)
     STORE x31, 31 * REGBYTES(sp)
-    csrr t0, mscratch
-    STORE t0, 32 * REGBYTES(sp)
-
 .endm
 
 /**
  * @brief Restore All General Registers, for interrupt handling
  *
  */
-.macro RESTORE_ALL ksp=0
+.macro RESTORE_ALL ms=0
     /* restore general register */
-    .if \ksp
-    addi t0, sp, CTX_REG_NR * REGBYTES
-    csrw mscratch, t0
-    .endif
 
     /* resw ra to sepc */
     LOAD x1,   0 * REGBYTES(sp)
     csrw mepc, x1
 
+    .if \ms
     LOAD x1,   2 * REGBYTES(sp)
     csrw mstatus, x1
     # li    x1, 0x00001800
     # csrs  mstatus, x1
+    .endif
 
     LOAD x1,   1 * REGBYTES(sp)
 
@@ -121,7 +116,7 @@
     LOAD x31, 31 * REGBYTES(sp)
 
     /* restore user sp */
-    LOAD sp, 32 * REGBYTES(sp)
+    addi sp, sp, CTX_GENERAL_REG_NR * REGBYTES
 .endm
 
 .macro RESTORE_SYS_GP

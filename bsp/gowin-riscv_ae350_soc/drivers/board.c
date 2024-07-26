@@ -9,6 +9,8 @@
 #include "../ae350_soc/lib/uart.h"
 #include "drv_uart.h"
 #include "tick.h"
+#include "interrupt.h"
+#include "plic.h"
 
 
 // Definitions ------------------------------------------------------------------------------
@@ -91,6 +93,7 @@ void rt_hw_board_init(void)
 {
     /* initalize interrupt */
     rt_hw_interrupt_init();
+    plic_init();
 
 	rt_hw_uart_init();
 #ifdef RT_USING_CONSOLE

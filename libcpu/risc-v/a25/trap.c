@@ -36,7 +36,7 @@ void dump_regs(struct rt_hw_stack_frame *regs)
     rt_kprintf("--------------Dump Registers-----------------\n");
 
     rt_kprintf("Function Registers:\n");
-    rt_kprintf("\tra(x1) = 0x%p\tuser_sp = 0x%p\n", regs->ra, regs->user_sp_exc_stack);
+    rt_kprintf("\tra(x1) = 0x%p\n", regs->ra);
     rt_kprintf("\tgp(x3) = 0x%p\ttp(x4) = 0x%p\n", regs->gp, regs->tp);
     rt_kprintf("Temporary Registers:\n");
     rt_kprintf("\tt0(x5) = 0x%p\tt1(x6) = 0x%p\n", regs->t0, regs->t1);
@@ -167,6 +167,8 @@ void handle_trap(rt_size_t mcause, rt_size_t mtval, rt_size_t mepc, struct rt_hw
 {
     rt_size_t id = mcause & MCAUSE_CAUSE;
     const char *msg;
+
+    // rt_kprintf("mcause:0x%p,mtval:0x%p,mepc:0x%p\n", mcause, mtval, mepc);
 
     /* supervisor external interrupt */
     if ((mcause & MCAUSE_INT) && ((mcause & MCAUSE_CAUSE) == IRQ_M_EXT))

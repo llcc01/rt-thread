@@ -12,6 +12,7 @@
 #ifndef __STACK_H__
 #define __STACK_H__
 
+#include "rttypes.h"
 #include <rtthread.h>
 struct rt_hw_stack_frame
 {
@@ -47,7 +48,6 @@ struct rt_hw_stack_frame
     rt_ubase_t t4;         /* x29 - t4     - temporary register 4                */
     rt_ubase_t t5;         /* x30 - t5     - temporary register 5                */
     rt_ubase_t t6;         /* x31 - t6     - temporary register 6                */
-    rt_ubase_t user_sp_exc_stack;    /* mscratch - user mode sp/exception stack  */
 };
 
 #endif

@@ -128,8 +128,8 @@
 #define FPPOP             XSTR(FPLOAD)
 #define FPREGSIZE         XSTR(FPREGBYTES)
 
-/* 33 general register + 1 padding */
-#define CTX_GENERAL_REG_NR  34
+/* 32 general register*/
+#define CTX_GENERAL_REG_NR  32
 
 #ifdef ENABLE_FPU
 /* 32 fpu register */

@@ -61,8 +61,8 @@ extern "C" {
  */
 #define HAL_MIE_ENABLE()                                set_csr(NDS_MSTATUS, MSTATUS_MIE)               // Enable general interrupt
 #define HAL_MIE_DISABLE()                               clear_csr(NDS_MSTATUS, MSTATUS_MIE)             // Disable general interrupt
-#define HAL_MEIP_ENABLE()                               set_csr(NDS_MIE, MIP_MEIP)                      // Enable external interrupt
-#define HAL_MEIP_DISABLE()                              clear_csr(NDS_MIE, MIP_MEIP)                    // Disable external interrupt
+#define HAL_MEIE_ENABLE()                               set_csr(NDS_MIE, MIP_MEIP)                      // Enable external interrupt
+#define HAL_MEIE_DISABLE()                              clear_csr(NDS_MIE, MIP_MEIP)                    // Disable external interrupt
 #define HAL_INTERRUPT_ENABLE(vector)                    __nds__plic_enable_interrupt(vector)
 #define HAL_INTERRUPT_DISABLE(vector)                   __nds__plic_disable_interrupt(vector)
 #define HAL_INTERRUPT_THRESHOLD(threshold)              __nds__plic_set_threshold(threshold)
@@ -83,6 +83,8 @@ extern void mext_interrupt(unsigned int irq_source);
 #ifdef __cplusplus
 }
 #endif
+
+void rt_hw_interrupt_init(void);
 
 
 #endif	/* __INTERRUPT_H__ */

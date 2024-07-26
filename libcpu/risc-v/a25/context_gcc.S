@@ -17,10 +17,10 @@
 rt_hw_context_switch_to:
     LOAD sp, (a0)
 
-    jal rt_thread_self
-    mv s1, a0
+    # jal rt_thread_self
+    # mv s1, a0
 
-    RESTORE_ALL 0
+    RESTORE_ALL 1
     mret
 
 /*
@@ -31,12 +31,19 @@ rt_hw_context_switch_to:
  */
     .globl rt_hw_context_switch
 rt_hw_context_switch:
-    csrw mscratch, sp
 
     // fake a mepc to return to the caller
     # li t0, 0x00001880 // force to machine mode(MPP=11) and set MPIE to 1
-    li t0, 0x00001800 // force to machine mode(MPP=11)
+
+    li t0, 0x1800 // force to machine mode(MPP=11)
+    csrw mstatus, t0
+    // get currrent mie
+    csrr t0, mstatus
+    andi t0, t0, 8
+    beqz t0, skip
+    li t0, 0x80 // set MPIE to 1
     csrs mstatus, t0
+skip:
     csrw mepc, ra//return address
 
     //saved from thread context
@@ -47,8 +54,8 @@ rt_hw_context_switch:
     //restore to thread context
     LOAD sp, (a1)
 
-    jal rt_thread_self
-    mv s1, a0
+    # jal rt_thread_self
+    # mv s1, a0
 
     RESTORE_ALL 1
     mret

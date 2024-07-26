@@ -75,11 +75,10 @@ void plic_enable_irq(int irqno)
  */
 void plic_handle_irq(void)
 {
-    int          cpu = 0;
     unsigned int irq;
 
     /* Enable interrupts in general to allow nested */
-    HAL_MIE_ENABLE();
+    // HAL_MIE_ENABLE();
 
     while ((irq = __nds__plic_claim_interrupt()))
     {
@@ -94,12 +93,12 @@ void plic_handle_irq(void)
         }
     }
     /* Disable interrupt in general to restore context */
-    HAL_MIE_DISABLE();
+    // HAL_MIE_DISABLE();
 }
 
 void plic_init(void)
 {
     // __nds__plic_enable_interrupt(0);
 
-    HAL_MEIP_ENABLE();
+    HAL_MEIE_ENABLE();
 }

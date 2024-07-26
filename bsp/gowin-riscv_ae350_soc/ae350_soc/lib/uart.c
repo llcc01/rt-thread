@@ -42,8 +42,10 @@ int uart_getc(UART_RegDef * uart_base)
 {
 	#define SERIAL_LSR_RDR 0x01
 
-	while ((uart_base->LSR & SERIAL_LSR_RDR) == 0);
-
+	if ((uart_base->LSR & SERIAL_LSR_RDR) == 0)
+	{
+		return -1;
+	}
 	return uart_base->RBR;
 }
 
@@ -99,6 +101,6 @@ void uart_set_interrupt(UART_RegDef * uart_base, unsigned int enable)
 	}
 	else
 	{
-		uart_base->IER = 0x00;
+		uart_base->IER &= ~UARTC_IER_RDR;
 	}
 }

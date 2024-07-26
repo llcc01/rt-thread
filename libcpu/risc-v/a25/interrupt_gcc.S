@@ -20,28 +20,13 @@
     .global trap_entry
     .global debug_check_sp
 trap_entry:
-    // distingush exception from kernel or user
-    csrrw   sp, mscratch, sp
-    bnez    sp, _save_context
-
-    // BE REALLY careful with mscratch,
-    // if it's wrong, we could looping here forever
-    // or accessing random memory and seeing things totally
-    // messy after a long time and don't even know why
-_from_kernel:
-    csrr    sp, mscratch
-    j _save_context
-
-_save_context:
     SAVE_ALL
-    // clear mscratch to say 'now in kernel mode'
-    csrw    mscratch, zero
 
-    RESTORE_SYS_GP
+    # RESTORE_SYS_GP
 
 
 _handle_interrupt_and_exception:
-    csrr a0, mcause
+    csrr    a0, mcause
     csrrc   a1, mtval, zero
     csrr    a2, mepc
     // sp as exception frame pointer
@@ -57,12 +42,14 @@ _interrupt_exit:
 _context_switch:
     la      t0, rt_interrupt_from_thread
     LOAD    a0, 0(t0)
+    STORE   sp, (a0)
+
     la      t0, rt_interrupt_to_thread
-    LOAD    a1, 0(t0)
-    jal     rt_hw_context_switch
+    LOAD    a0, 0(t0)
+    LOAD    sp, (a0)
 
 _resume_execution:
-    RESTORE_ALL 1
+    RESTORE_ALL 0
     mret
 
 .global rt_hw_interrupt_enable
@@ -72,5 +59,5 @@ rt_hw_interrupt_enable:
 
 .global rt_hw_interrupt_disable
 rt_hw_interrupt_disable:
-    csrrci a0, mstatus, 8   /* clear MIE */
+    csrrci a0, mstatus, 0x8   /* clear MIE */
     jr ra

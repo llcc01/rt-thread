@@ -72,7 +72,6 @@ rt_uint8_t *rt_hw_stack_init(void       *tentry,
     frame->gp      = (rt_ubase_t)&__global_pointer$;
     frame->a0      = (rt_ubase_t)parameter;
     frame->epc     = (rt_ubase_t)tentry;
-    frame->user_sp_exc_stack = (rt_ubase_t)(((rt_ubase_t)stk) + sizeof(struct rt_hw_stack_frame));
 
     /* force to supervisor mode(SPP=1) and set SPIE and SUM to 1 */
 // #ifdef ENABLE_FPU
