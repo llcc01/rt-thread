@@ -5,14 +5,11 @@ from building import *
 cwd = GetCurrentDir()
 
 src = Split('''
-ae350/uart_ae350.c
-ae350/gpio_ae350.c
 ae350/dma_ae350.c
 ae350/i2c_ae350.c
 ae350/pit_ae350.c
 ae350/pwm_ae350.c
 ae350/rtc_ae350.c
-ae350/spi_ae350.c
 ae350/wdt_ae350.c
 ''')
 

@@ -74,6 +74,7 @@
 #define TXTHRES_OFFSET                (16)
 
 /* SPI interrupt status register */
+#define SPI_STATUS_ACTIVE             (1UL << 0)
 /* SPI interrupt enable register */
 #define SPI_RXFIFOOORINT              (1UL << 0)
 #define SPI_TXFIFOOURINT              (1UL << 1)
