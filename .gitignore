@@ -54,3 +54,6 @@ cmake-build-debug
 # vDSO
 vdso_sys.os
 vdso.lds
+
+.cache/
+compile_commands.json

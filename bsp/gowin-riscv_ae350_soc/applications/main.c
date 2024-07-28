@@ -3,65 +3,33 @@
 
 // Includes ---------------------------------------------------------------------------------
 #include <rtthread.h>
-#include "../ae350_soc/driver/include/Driver_GPIO.h"
+#include "rttypes.h"
+#include "spi_msd.h"
+#include <dfs_fs.h>
+#include <dfs_romfs.h>
+#include <sys/stat.h>
 
-
-// Definitions ------------------------------------------------------------------------------
-
-extern AE350_DRIVER_GPIO Driver_GPIO;	// GPIO
-
-// On the DK-START-GW5AT138 V2.0
-#define GPIO_USED_MASK	0x7				// GPIO pins used
-#define NUM_LED			3				// LED number
-
-
-// Callback
-void gpio_callback(uint32_t event)
-{
-	switch (event)
-	{
-		// Don't have GPIO pins as input interrupt event
-		default:
-			break;
-	}
-}
+extern const struct romfs_dirent romfs_root;
 
 // Main application entry
 int main(void)
 {
-	// AE350_DRIVER_GPIO *GPIO_Dri = &Driver_GPIO;
-	// uint8_t num = 0;
-	// uint32_t led_pin = 0;	// This led
-
-	// rt_kprintf("Hello, RT-Thread!\n");
-
-	// //Initializes GPIO
-	// GPIO_Dri->Initialize(gpio_callback);
-
-	// // Set GPIO direction (GPIO pins as led: output)
-	// GPIO_Dri->SetDir(GPIO_USED_MASK, AE350_GPIO_DIR_OUTPUT);
-
-	// Run waterfall led
-	// 0: low level, off
-	// 1: high level, on
-	// while(1)
-	// {
-	// 	// This led
-	// 	led_pin = 0x1 << (num++);
-
-	// 	// Other leds are off
-	// 	GPIO_Dri->Write(~led_pin, 0);	// Low level: off
-
-	// 	// This led is on
-	// 	GPIO_Dri->Write(led_pin, 1);	// High level: on
-
-	// 	rt_kprintf("LED %d\n", num);
-
-	// 	rt_thread_mdelay(100);			// Delay
-
-	// 	if(num == NUM_LED)
-	// 	{
-	// 		num = 0;
-	// 	}
-	// }
+    rt_kprintf("Hello, RT-Thread!\n");
+    if (dfs_mount(RT_NULL, "/", "rom", 0, &romfs_root) != 0)
+    {
+        rt_kprintf("Dir / mount failed!\n");
+    }
+    if (msd_init("sd0", "spi02") != 0)
+    {
+        rt_kprintf("SD Card init failed!\n");
+    }
+    if (dfs_mount("sd0", "/mnt", "elm", 0, RT_NULL) != 0)
+    {
+        rt_kprintf("SD Card mount failed!\n");
+    }
+    if (dfs_mount(RT_NULL, "/tmp", "tmp", 0, RT_NULL) != 0)
+    {
+        rt_kprintf("tmp mount failed!\n");
+    }
+    return 0;
 }
