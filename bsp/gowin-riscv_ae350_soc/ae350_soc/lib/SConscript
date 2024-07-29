@@ -4,7 +4,12 @@ from building import *
 cwd = GetCurrentDir()
 
 # add the general drvers.
-src = Glob("*.c")
+# src = Glob("*.c")
+src = Split('''
+gpio.c
+spi.c
+uart.c
+''')
 
 CPPPATH = [cwd]
 

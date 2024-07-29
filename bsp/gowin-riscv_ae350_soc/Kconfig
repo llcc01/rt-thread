@@ -45,4 +45,10 @@ menu "AE350 On-chip Peripheral Drivers"
                 default n
 
         endif
+
+    config BSP_USING_GBE
+        bool "Enable RTL8211F"
+        select RT_USING_LWIP
+        default n
+
 endmenu
