@@ -43,7 +43,7 @@ if PLATFORM == 'gcc':
     OBJCPY = PREFIX + 'objcopy'
 
     DEVICE = ' -march=rv32imafdc -mabi=ilp32d -mcmodel=medany -msmall-data-limit=8 -DUSE_M_TIME -DNO_INIT '
-    CFLAGS  = DEVICE + ' -nostartfiles -D_POSIX_C_SOURCE=200809 -ffreestanding -flax-vector-conversions -Wno-cpp -fno-common -ffunction-sections -fdata-sections -fstrict-volatile-bitfields -fdiagnostics-color=always'
+    CFLAGS  = DEVICE + ' -nostartfiles -D_POSIX_C_SOURCE=200809 -ffreestanding -flax-vector-conversions -Wno-cpp -fno-common -ffunction-sections -fdata-sections -fdiagnostics-color=always'
     CFLAGS += ' -save-temps=obj'
     AFLAGS  = ' -c' + DEVICE + ' -x assembler-with-cpp -D__ASSEMBLY__ '
     AFLAGS += ' -Iplatform -Isrc/ae350'
