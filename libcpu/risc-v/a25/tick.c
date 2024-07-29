@@ -47,7 +47,7 @@ int tick_isr(void)
 int rt_hw_tick_init(void)
 {
     /* calculate the tick cycles */
-    tick_cycles = CPUFREQ / RT_TICK_PER_SECOND;
+    tick_cycles = 100 * MHz / RT_TICK_PER_SECOND;
 
 	/* Disable the machine timer interrupt to prevent re-entry */
 	HAL_MTIME_DISABLE();
