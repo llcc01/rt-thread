@@ -20,6 +20,8 @@
 
 #include "tick.h"
 
+#define TICKFREQ (100*MHz)
+
 static volatile unsigned long tick_cycles = 0;
 
 void set_timer(unsigned long long mtime)
@@ -47,7 +49,7 @@ int tick_isr(void)
 int rt_hw_tick_init(void)
 {
     /* calculate the tick cycles */
-    tick_cycles = 100 * MHz / RT_TICK_PER_SECOND;
+    tick_cycles = TICKFREQ / RT_TICK_PER_SECOND;
 
 	/* Disable the machine timer interrupt to prevent re-entry */
 	HAL_MTIME_DISABLE();
@@ -79,7 +81,7 @@ void rt_hw_us_delay(rt_uint32_t us)
     unsigned long run_time;
 
     start_time = clock_cpu_gettime();
-    end_time = start_time + us * (CPUFREQ / 1000000);
+    end_time = start_time + us * (TICKFREQ / 1000000);
     do
     {
         run_time = clock_cpu_gettime();
