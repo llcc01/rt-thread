@@ -7,22 +7,15 @@
  * Date           Author            Notes
  * 2020-07-20     thread-liu        the first version
  */
+#if defined(BSP_USING_GBE)
 
-#include "board.h"
-// #include "drv_config.h"
 #include <netif/ethernetif.h>
 #include <stdint.h>
-#include "lwipopts.h"
+
 #include "drv_eth.h"
 #include "ae350_soc/lib/ethernet.h"
-#include "rtdef.h"
-#include "rthw.h"
-#include "interrupt.h"
-#include "plic.h"
-#include "rtthread.h"
-#include "rttypes.h"
 
-#if defined(BSP_USING_GBE)
+
 
 #define IRQ_ETH_SOURCE  IRQ_GP0_SOURCE
 
