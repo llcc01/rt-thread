@@ -5,6 +5,8 @@
 #include "ae350.h"
 #include "ae350_soc/driver/ae350/spi_ae350.h"
 
+#include <rtthread.h>
+
 uint32_t txfifo_size = 0;
 
 void spi_init(SPI_RegDef * spi_base)
@@ -86,4 +88,9 @@ void spi_transfer(SPI_RegDef * spi_base, const uint8_t * tx_buf, uint8_t * rx_bu
             rx_buf += part_len;
         }
     }
+}
+
+void spi_set_clk_div(SPI_RegDef * spi_base, uint8_t div)
+{
+    spi_base->TIMING = (spi_base->TIMING & 0xffffff00) | div;
 }

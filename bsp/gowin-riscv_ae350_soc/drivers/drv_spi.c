@@ -13,6 +13,7 @@
 #include "ae350_soc/driver/include/Driver_GPIO.h"
 #include "ae350_soc/lib/gpio.h"
 
+#define SPI_CLOCK_FREQ (50*MHz)
 #define SD_CS_PIN 20
 
 struct spi_cs_t {
@@ -22,7 +23,10 @@ struct spi_cs_t {
 
 static rt_err_t configure(struct rt_spi_device *device,
                           struct rt_spi_configuration *configuration) {
-  
+  if (configuration->max_hz > SPI_CLOCK_FREQ || configuration->max_hz < SPI_CLOCK_FREQ / 2 / 255) {
+    return -RT_EINVAL;
+  }
+  spi_set_clk_div(AE350_SPI, SPI_CLOCK_FREQ / 2 / configuration->max_hz - 1);
   return RT_EOK;
 }
 
