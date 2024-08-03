@@ -7,6 +7,8 @@
  * Date           Author            Notes
  * 2020-07-20     thread-liu        the first version
  */
+
+#include <rtthread.h>
 #if defined(BSP_USING_GBE)
 
 #include <netif/ethernetif.h>
